@@ -1,0 +1,17 @@
+{
+  "python": "3.12.14 (main, Sep  1 2026, 14:17:39) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "torch": "2.11.0+cu128",
+  "numpy": "2.5.3",
+  "matplotlib": "3.11.2",
+  "device": "cpu",
+  "dtype": "float64",
+  "torch_threads": 1,
+  "deterministic_algorithms": true,
+  "command": [
+    "cooling_pinn.py"
+  ],
+  "source_sha256": "271a15341b405ae6898685f01a91f7cf99408b78bbbacd7441150731402206d5",
+  "privacy_note": "Machine-specific executable paths were removed for publication. Package versions, training settings and original source hash are preserved.",
+  "source_snapshot": "provenance/executed_cooling_pinn.py"
+}
