@@ -5,6 +5,7 @@ Run from the repository root, for example:
         --output experiments/02-zo-vs-adam/results/final
 Finished runs are skipped, so an interrupted sweep can be restarted.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -36,9 +37,17 @@ def expand(config: dict) -> list[dict]:
             grid = {k: v if isinstance(v, list) else [v] for k, v in run["hp"].items()}
             for deriv in derivs:
                 for values in itertools.product(*grid.values()):
-                    hp = dict(zip(grid, values))
-                    out.append({"method": run["method"], "deriv": deriv, "tag": run["tag"].format(**hp),
-                                "seed": seed, "budget": run["budget"], "hp": hp})
+                    hp = dict(zip(grid, values, strict=False))
+                    out.append(
+                        {
+                            "method": run["method"],
+                            "deriv": deriv,
+                            "tag": run["tag"].format(**hp),
+                            "seed": seed,
+                            "budget": run["budget"],
+                            "hp": hp,
+                        }
+                    )
     return out
 
 
@@ -57,10 +66,22 @@ def main():
     if args.output is None:
         ap.error("--output is required unless --list is given")
     args.output.mkdir(parents=True, exist_ok=True)
-    (args.output / "environment.json").write_text(json.dumps({
-        "python": sys.version, "platform": platform.platform(), "torch": torch.__version__,
-        "numpy": np.__version__, "cma": cma.__version__, "threads": 1, "dtype": "float64",
-        "fd_h": FD_H, "n_params": N_PARAMS}, indent=2))
+    (args.output / "environment.json").write_text(
+        json.dumps(
+            {
+                "python": sys.version,
+                "platform": platform.platform(),
+                "torch": torch.__version__,
+                "numpy": np.__version__,
+                "cma": cma.__version__,
+                "threads": 1,
+                "dtype": "float64",
+                "fd_h": FD_H,
+                "n_params": N_PARAMS,
+            },
+            indent=2,
+        )
+    )
     for r in runs:
         name = f"{r['method']}-{r['deriv']}-{r['tag']}-seed{r['seed']}"
         out = args.output / name
@@ -72,15 +93,44 @@ def main():
         tr = METHODS[r["method"]](r["seed"], r["budget"], r["hp"], r["deriv"])
         seconds = time.perf_counter() - start
         metrics, predictions = final_metrics(tr.best_theta)
-        metrics.update(method=r["method"], deriv=r["deriv"], tag=r["tag"], seed=r["seed"],
-                       budget=r["budget"], hp=r["hp"], selected_evals=tr.best_evals,
-                       validation_score=tr.best, seconds=seconds)
+        metrics.update(
+            method=r["method"],
+            deriv=r["deriv"],
+            tag=r["tag"],
+            seed=r["seed"],
+            budget=r["budget"],
+            hp=r["hp"],
+            selected_evals=tr.best_evals,
+            validation_score=tr.best,
+            seconds=seconds,
+        )
         (out / "metrics.json").write_text(json.dumps(metrics, indent=2))
         (out / "history.json").write_text(json.dumps(tr.history))
-        np.savetxt(out / "predictions.csv", predictions, delimiter=",", comments="",
-                   header="time_min,predicted_c,exact_c,absolute_error_c,residual_c_per_min")
-        print(json.dumps({k: metrics[k] for k in ("method", "deriv", "tag", "seed", "rmse_c",
-                                                   "validation_score", "selected_evals", "seconds")}), flush=True)
+        np.savetxt(
+            out / "predictions.csv",
+            predictions,
+            delimiter=",",
+            comments="",
+            header="time_min,predicted_c,exact_c,absolute_error_c,residual_c_per_min",
+        )
+        print(
+            json.dumps(
+                {
+                    k: metrics[k]
+                    for k in (
+                        "method",
+                        "deriv",
+                        "tag",
+                        "seed",
+                        "rmse_c",
+                        "validation_score",
+                        "selected_evals",
+                        "seconds",
+                    )
+                }
+            ),
+            flush=True,
+        )
 
 
 if __name__ == "__main__":

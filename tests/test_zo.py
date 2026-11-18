@@ -1,4 +1,5 @@
 """Checks that the batched ZO model matches the cooling network exactly."""
+
 import unittest
 
 import torch

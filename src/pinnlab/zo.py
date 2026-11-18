@@ -5,6 +5,7 @@ chain rule, or central finite differences), and three trainers: Adam (reference)
 ZO-Adam (two-point random gradient estimate) and CMA-ES. Budgets count loss
 evaluations; exact temperatures are used only in `final_metrics`.
 """
+
 from __future__ import annotations
 
 import time
@@ -27,7 +28,7 @@ def unflatten(theta: torch.Tensor):
     out, i = [], 0
     for s in SHAPES:
         n = int(np.prod(s))
-        out.append(theta[:, i:i + n].reshape(theta.shape[0], *s))
+        out.append(theta[:, i : i + n].reshape(theta.shape[0], *s))
         i += n
     return out
 
@@ -41,7 +42,7 @@ def load_flat(model: torch.nn.Module, theta: torch.Tensor) -> None:
     with torch.no_grad():
         for p in model.parameters():
             n = p.numel()
-            p.copy_(theta[i:i + n].reshape(p.shape))
+            p.copy_(theta[i : i + n].reshape(p.shape))
             i += n
 
 
@@ -55,10 +56,10 @@ def forward(theta: torch.Tensor, x: torch.Tensor, with_derivative: bool):
     u = (torch.einsum("pnk,pjk->pnj", h2, W3) + b3[:, None, :])[..., 0]
     if not with_derivative:
         return u, None
-    dz1 = W1[:, None, :, 0].expand_as(z1)            # dz1/dx
-    dh1 = (1 - h1 ** 2) * dz1
+    dz1 = W1[:, None, :, 0].expand_as(z1)  # dz1/dx
+    dh1 = (1 - h1**2) * dz1
     dz2 = torch.einsum("pnk,pjk->pnj", dh1, W2)
-    dh2 = (1 - h2 ** 2) * dz2
+    dh2 = (1 - h2**2) * dz2
     du = torch.einsum("pnk,pjk->pnj", dh2, W3)[..., 0]
     return u, du
 
@@ -117,8 +118,14 @@ class Tracker:
             return
         self.next = evals + self.every
         s = validation_score(theta, self.val, self.deriv)
-        self.history.append({"evals": evals, "seconds": time.perf_counter() - self.t0,
-                             "train_loss": float(torch.as_tensor(train_loss).detach()), "validation_score": s})
+        self.history.append(
+            {
+                "evals": evals,
+                "seconds": time.perf_counter() - self.t0,
+                "train_loss": float(torch.as_tensor(train_loss).detach()),
+                "validation_score": s,
+            }
+        )
         if s < self.best:
             self.best, self.best_theta, self.best_evals = s, theta.clone(), evals
 
@@ -165,11 +172,11 @@ def run_zoadam(seed, budget, hp, deriv):
             batch = torch.cat([theta + mu * U, theta - mu * U])
             L = batched_loss(batch, train, deriv)[0]
             evals += 2 * q
-            g = ((L[:q] - L[q:]) / (2 * mu)) @ U / q   # two-point estimate
+            g = ((L[:q] - L[q:]) / (2 * mu)) @ U / q  # two-point estimate
             t += 1
             m = b1 * m + (1 - b1) * g
             v = b2 * v + (1 - b2) * g * g
-            theta = theta - lr * (m / (1 - b1 ** t)) / ((v / (1 - b2 ** t)).sqrt() + eps)
+            theta = theta - lr * (m / (1 - b1**t)) / ((v / (1 - b2**t)).sqrt() + eps)
             loss_now = batched_loss(theta[None], train, deriv)[0][0]
             evals += 1
     tr.next = 0
@@ -181,8 +188,16 @@ def run_cmaes(seed, budget, hp, deriv):
     """Train with CMA-ES, scoring each generation's candidates in one batch."""
     train, val = points(seed)
     theta0 = init_theta(seed)
-    opts = {"seed": seed + 40000, "verbose": -9, "maxfevals": budget, "tolfun": 0, "tolx": 0,
-            "tolfunhist": 0, "tolstagnation": 10 ** 9, "tolflatfitness": 10 ** 9}
+    opts = {
+        "seed": seed + 40000,
+        "verbose": -9,
+        "maxfevals": budget,
+        "tolfun": 0,
+        "tolx": 0,
+        "tolfunhist": 0,
+        "tolstagnation": 10**9,
+        "tolflatfitness": 10**9,
+    }
     if hp.get("popsize"):
         opts["popsize"] = hp["popsize"]
     es = cma.CMAEvolutionStrategy(theta0.numpy(), hp["sigma0"], opts)
