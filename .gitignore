@@ -6,3 +6,5 @@ results-reproduction/
 report/
 .DS_Store
 Thumbs.db
+*.egg-info/
+build/

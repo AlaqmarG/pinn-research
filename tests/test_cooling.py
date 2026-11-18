@@ -5,7 +5,7 @@ import unittest
 import torch
 from torch import nn
 
-from cooling_pinn import Config, CoolingNet, load_checkpoint, residual
+from pinnlab.cooling import Config, CoolingNet, load_checkpoint, residual
 
 
 class CalculusTests(unittest.TestCase):
