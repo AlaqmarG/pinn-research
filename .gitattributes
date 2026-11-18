@@ -2,4 +2,4 @@
 *.png binary
 *.pdf binary
 *.pt binary
-provenance/executed_cooling_pinn.py -text
+experiments/01-cooling-adam/provenance/executed_cooling_pinn.py -text

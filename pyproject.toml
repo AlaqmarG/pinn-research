@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pinnlab"
+version = "0.1.0"
+description = "Physics-informed neural network experiments on Newton cooling"
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = [
+    "torch>=2.11",
+    "numpy>=2.5",
+    "matplotlib>=3.11",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
