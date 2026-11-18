@@ -50,6 +50,8 @@ pip install -r experiments/02-zo-vs-adam/requirements.txt
 bash experiments/02-zo-vs-adam/reproduce.sh out
 ```
 
+Each config lists the seeds once and gives any setting that varies as a list; `run.py` runs every combination. Add `--list` to see the runs a config expands to without running them.
+
 This runs the tuning grid, the 18 final runs and the figures, about 75 minutes on one CPU thread, and writes everything to `out/`. Finished runs are skipped, so it can be stopped and restarted. Run it on an otherwise idle machine if you want the times to be comparable.
 
 The outputs behind the table above are in [02-zo-vs-adam-raw-results.zip](https://github.com/AlaqmarG/pinn-research/releases/download/raw-results-v1/02-zo-vs-adam-raw-results.zip) on the [raw-results-v1 release](https://github.com/AlaqmarG/pinn-research/releases/tag/raw-results-v1): one folder per run (`metrics.json`, `history.json`, `predictions.csv`), `summary.json`, `environment.json` and the run log.
@@ -61,7 +63,7 @@ The outputs behind the table above are in [02-zo-vs-adam-raw-results.zip](https:
 ├── reproduce.sh        runs everything below in order
 ├── run.py              runs every entry in a config file
 ├── make_figures.py     summary.json, LaTeX table and convergence figure
-├── configs/            tuning.json (seed 0 grid), final.json (18 runs)
+├── configs/            tuning.json (seed 0 grid, 9 runs), final.json (3 seeds, 18 runs)
 └── provenance/         the exact script that produced the results
 ```
 
