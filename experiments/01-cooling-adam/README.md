@@ -24,9 +24,9 @@ The supplied experiment used three seeds and 6,000 Adam updates per seed. Checkp
 
 Across seeds, mean RMSE was **0.00360496 °C**, with sample standard deviation **0.000950944 °C**. These errors were measured on a 1,001-point grid within the ten-minute interval.
 
-![Predicted and exact cooling curves for seed 21](results/seed_21/temperature_overlay.png)
+![Predicted and exact cooling curves for seed 21](https://github.com/AlaqmarG/pinn-research/releases/download/raw-results-v1/01-cooling-adam-temperature-overlay.png)
 
-See [the results report](results/RESULTS.md) and [full metrics](results/summary.json). Each seed folder contains its selected checkpoint, configuration, sample times, loss history, predictions, temperature overlay, absolute-error plot and loss plot.
+All outputs from these runs are in [01-cooling-adam-raw-results.zip](https://github.com/AlaqmarG/pinn-research/releases/download/raw-results-v1/01-cooling-adam-raw-results.zip) on the [raw-results-v1 release](https://github.com/AlaqmarG/pinn-research/releases/tag/raw-results-v1): `RESULTS.md`, `summary.json`, `environment.json`, the test transcript, and for each seed the selected checkpoint, configuration, sample times, loss history, predictions and plots. Running `reproduce.sh` writes the same files locally.
 
 ## Setup and reproduction
 
@@ -52,7 +52,7 @@ python3.12 -m venv .venv
 .venv/bin/python experiments/01-cooling-adam/run.py --output results-reproduction
 ```
 
-The default seeds are 7, 21 and 42. `--seeds` accepts a list of distinct integers; `--steps` changes the training budget. Using the default output folder, `results/`, replaces the supplied named outputs. The commands above write new results to `results-reproduction/`. Exact numerical agreement across different hardware or library builds is not guaranteed.
+The default seeds are 7, 21 and 42. `--seeds` accepts a list of distinct integers; `--steps` changes the training budget. Without `--output`, results go to `results/` in this folder, which git ignores. `bash experiments/01-cooling-adam/reproduce.sh out` runs the defaults and writes everything to `out/`. Exact numerical agreement across different hardware or library builds is not guaranteed.
 
 ## Method and checks
 
@@ -62,11 +62,11 @@ The network has two hidden layers of 24 tanh units and a linear output, with 673
 
 After selection, each checkpoint is reloaded from disk and checked for identical predictions on 101 probe times. Final evaluation uses 1,001 equally spaced times. The interior test points are held out; the initial endpoint is the known initial-condition constraint. Physical residuals are reported in °C/min.
 
-The four tests check analytic residuals and physical units with a non-unit time scale, derivatives against finite differences, backpropagation through the derivative, and checkpoint serialization. The original successful test transcript is in [results/test-results.txt](results/test-results.txt).
+The four tests check analytic residuals and physical units with a non-unit time scale, derivatives against finite differences, backpropagation through the derivative, and checkpoint serialization. The original successful test transcript is `test-results.txt` in the release zip.
 
 ## Provenance and limits
 
-[results/environment.json](results/environment.json) preserves the original package versions, CPU settings and executed source hash. Machine-specific executable paths were removed before publication. Its source hash matches [provenance/executed_cooling_pinn.py](provenance/executed_cooling_pinn.py), the unchanged source that produced the supplied results. The current code is split between [run.py](run.py) and [src/pinnlab/cooling.py](../../src/pinnlab/cooling.py). It differs from that file only in environment logging: new logs omit executable and output paths, record portable training arguments and hash both files. Training, selection and evaluation calculations are unchanged, and a 300-step run on the same library versions gives byte-identical predictions.
+`environment.json` in the release zip preserves the original package versions, CPU settings and executed source hash. Machine-specific executable paths were removed before publication. Its source hash matches [provenance/executed_cooling_pinn.py](provenance/executed_cooling_pinn.py), the unchanged source that produced the supplied results. The current code is split between [run.py](run.py) and [src/pinnlab/cooling.py](../../src/pinnlab/cooling.py). It differs from that file only in environment logging: new logs omit executable and output paths, record portable training arguments and hash both files. Training, selection and evaluation calculations are unchanged, and a 300-step run on the same library versions gives byte-identical predictions.
 
 Checkpoints contain selected model weights and configuration, not optimizer state for resuming training. `relative_l2_temperature` normalizes the error by the exact temperature norm; `relative_l2_excess_temperature` normalizes by the exact temperature above ambient. Seed variation uses the sample standard deviation (n−1).
 

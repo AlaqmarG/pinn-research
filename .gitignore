@@ -8,3 +8,8 @@ report/
 Thumbs.db
 *.egg-info/
 build/
+
+# Generated outputs are published as release assets, not committed.
+experiments/*/results/
+experiments/*/figures/
+out/
