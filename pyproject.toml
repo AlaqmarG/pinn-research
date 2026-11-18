@@ -15,5 +15,16 @@ dependencies = [
     "cma>=4.6",
 ]
 
+[project.optional-dependencies]
+dev = ["ruff==0.14.0"]
+
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["experiments/*/provenance"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]

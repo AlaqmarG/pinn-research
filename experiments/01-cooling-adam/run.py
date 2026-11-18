@@ -3,6 +3,7 @@
 Exact temperatures are used only for final evaluation, after checkpoint selection.
 Run from the repository root:  python experiments/01-cooling-adam/run.py
 """
+
 from __future__ import annotations
 
 import argparse
@@ -16,13 +17,13 @@ from dataclasses import asdict
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-from pinnlab.cooling import (Config, CoolingNet, evaluate, load_checkpoint, losses,
-                             write_csv, write_json)
+from pinnlab.cooling import Config, CoolingNet, evaluate, load_checkpoint, losses, write_csv, write_json
 
 
 def plot_run(folder: Path, history: list[dict], predictions: np.ndarray, seed: int) -> None:
@@ -31,20 +32,31 @@ def plot_run(folder: Path, history: list[dict], predictions: np.ndarray, seed: i
     ax.plot(t, exact, label="Exact solution", color="black", linewidth=2)
     ax.plot(t, pred, label="PINN", color="#0072B2", linestyle="--")
     ax.set(xlabel="Time (min)", ylabel="Temperature (°C)", title=f"Cooling: seed {seed}")
-    ax.legend(); ax.grid(alpha=.2); fig.tight_layout()
-    fig.savefig(folder / "temperature_overlay.png", dpi=180); plt.close(fig)
+    ax.legend()
+    ax.grid(alpha=0.2)
+    fig.tight_layout()
+    fig.savefig(folder / "temperature_overlay.png", dpi=180)
+    plt.close(fig)
     fig, ax = plt.subplots(figsize=(7, 4))
     ax.plot(t, error, color="#D55E00")
     ax.set(xlabel="Time (min)", ylabel="Absolute temperature error (°C)", title=f"Final evaluation: seed {seed}")
-    ax.grid(alpha=.2); fig.tight_layout()
-    fig.savefig(folder / "absolute_error.png", dpi=180); plt.close(fig)
+    ax.grid(alpha=0.2)
+    fig.tight_layout()
+    fig.savefig(folder / "absolute_error.png", dpi=180)
+    plt.close(fig)
     fig, ax = plt.subplots(figsize=(7, 4))
-    for key, label in [("train_physics_mse", "Training residual"), ("train_ic_mse", "Initial condition"),
-                       ("validation_score", "Validation residual + IC")]:
+    for key, label in [
+        ("train_physics_mse", "Training residual"),
+        ("train_ic_mse", "Initial condition"),
+        ("validation_score", "Validation residual + IC"),
+    ]:
         ax.semilogy([row["step"] for row in history], [max(row[key], 1e-20) for row in history], label=label)
     ax.set(xlabel="Adam step", ylabel="Dimensionless squared loss", title=f"Physics-only training: seed {seed}")
-    ax.legend(); ax.grid(alpha=.2); fig.tight_layout()
-    fig.savefig(folder / "losses.png", dpi=180); plt.close(fig)
+    ax.legend()
+    ax.grid(alpha=0.2)
+    fig.tight_layout()
+    fig.savefig(folder / "losses.png", dpi=180)
+    plt.close(fig)
 
 
 def run_seed(seed: int, c: Config, output: Path) -> dict:
@@ -53,14 +65,22 @@ def run_seed(seed: int, c: Config, output: Path) -> dict:
     folder = output / f"seed_{seed}"
     folder.mkdir(parents=True, exist_ok=True)
     # Separate random streams; fixed points throughout each run. Neither uses labels.
-    train = torch.rand((c.n_train, 1), generator=torch.Generator().manual_seed(seed+10000), dtype=torch.float64)
-    validation = torch.rand((c.n_validation, 1), generator=torch.Generator().manual_seed(seed+20000), dtype=torch.float64)
+    train = torch.rand((c.n_train, 1), generator=torch.Generator().manual_seed(seed + 10000), dtype=torch.float64)
+    validation = torch.rand(
+        (c.n_validation, 1), generator=torch.Generator().manual_seed(seed + 20000), dtype=torch.float64
+    )
     test = np.linspace(0, 1, c.n_test)
     assert not np.intersect1d(train.numpy(), validation.numpy()).size
     assert not np.intersect1d(train.numpy(), test).size
     assert not np.intersect1d(validation.numpy(), test).size
-    np.savetxt(folder / "train_times_min.csv", train.numpy()*c.end_min, delimiter=",", header="time_min", comments="")
-    np.savetxt(folder / "validation_times_min.csv", validation.numpy()*c.end_min, delimiter=",", header="time_min", comments="")
+    np.savetxt(folder / "train_times_min.csv", train.numpy() * c.end_min, delimiter=",", header="time_min", comments="")
+    np.savetxt(
+        folder / "validation_times_min.csv",
+        validation.numpy() * c.end_min,
+        delimiter=",",
+        header="time_min",
+        comments="",
+    )
     model = CoolingNet(c)
     optimizer = torch.optim.Adam(model.parameters(), lr=c.learning_rate)
     best_score, best_step, best_state = float("inf"), 0, None
@@ -71,9 +91,16 @@ def run_seed(seed: int, c: Config, output: Path) -> dict:
             p, ic = losses(model, train, c, create_graph=False)
             vp, vic = losses(model, validation, c, create_graph=False)
             score = float(vp.detach() + c.ic_weight * vic.detach())
-            history.append({"step": step, "train_physics_mse": p.item(), "train_ic_mse": ic.item(),
-                            "validation_physics_mse": vp.item(), "validation_ic_mse": vic.item(),
-                            "validation_score": score})
+            history.append(
+                {
+                    "step": step,
+                    "train_physics_mse": p.item(),
+                    "train_ic_mse": ic.item(),
+                    "validation_physics_mse": vp.item(),
+                    "validation_ic_mse": vic.item(),
+                    "validation_score": score,
+                }
+            )
             if score < best_score:
                 best_score, best_step = score, step
                 best_state = copy.deepcopy(model.state_dict())
@@ -81,28 +108,46 @@ def run_seed(seed: int, c: Config, output: Path) -> dict:
             break
         optimizer.zero_grad(set_to_none=True)
         p, ic = losses(model, train, c)
-        (p + c.ic_weight*ic).backward()
+        (p + c.ic_weight * ic).backward()
         optimizer.step()
     elapsed = time.perf_counter() - start
     model.load_state_dict(best_state)
     checkpoint_path = folder / "checkpoint.pt"
-    torch.save({"model_state_dict": best_state, "config": asdict(c), "seed": seed,
-                "selected_step": best_step, "validation_score": best_score,
-                "selection_rule": "minimum validation residual MSE + ic_weight * IC MSE; no exact labels"}, checkpoint_path)
+    torch.save(
+        {
+            "model_state_dict": best_state,
+            "config": asdict(c),
+            "seed": seed,
+            "selected_step": best_step,
+            "validation_score": best_score,
+            "selection_rule": "minimum validation residual MSE + ic_weight * IC MSE; no exact labels",
+        },
+        checkpoint_path,
+    )
     reloaded, loaded_config, _ = load_checkpoint(checkpoint_path)
     probe = torch.linspace(0, 1, 101, dtype=torch.float64)[:, None]
     with torch.no_grad():
-        reload_difference = float((model(probe)-reloaded(probe)).abs().max())
+        reload_difference = float((model(probe) - reloaded(probe)).abs().max())
     assert reload_difference == 0.0 and loaded_config == c
     metrics, predictions = evaluate(reloaded, c)
-    metrics.update(seed=seed, selected_step=best_step, validation_score=best_score,
-                   training_seconds=elapsed, reload_max_abs_difference_dimensionless=reload_difference,
-                   checkpoint_sha256=hashlib.sha256(checkpoint_path.read_bytes()).hexdigest())
+    metrics.update(
+        seed=seed,
+        selected_step=best_step,
+        validation_score=best_score,
+        training_seconds=elapsed,
+        reload_max_abs_difference_dimensionless=reload_difference,
+        checkpoint_sha256=hashlib.sha256(checkpoint_path.read_bytes()).hexdigest(),
+    )
     write_json(folder / "config.json", asdict(c))
     write_json(folder / "metrics.json", metrics)
     write_csv(folder / "history.csv", history)
-    np.savetxt(folder / "predictions.csv", predictions, delimiter=",", comments="",
-               header="time_min,predicted_c,exact_c,absolute_error_c,residual_c_per_min")
+    np.savetxt(
+        folder / "predictions.csv",
+        predictions,
+        delimiter=",",
+        comments="",
+        header="time_min,predicted_c,exact_c,absolute_error_c,residual_c_per_min",
+    )
     plot_run(folder, history, predictions, seed)
     print(json.dumps(metrics), flush=True)
     return metrics
@@ -110,23 +155,50 @@ def run_seed(seed: int, c: Config, output: Path) -> dict:
 
 def summarize(results: list[dict], output: Path, c: Config) -> None:
     keys = ["mae_c", "rmse_c", "max_abs_error_c", "initial_abs_error_c", "test_residual_rms_c_per_min"]
-    aggregate = {key: {"mean": float(np.mean([r[key] for r in results])),
-                       "sample_std": float(np.std([r[key] for r in results], ddof=1)) if len(results)>1 else None,
-                       "min": min(r[key] for r in results), "max": max(r[key] for r in results)} for key in keys}
+    aggregate = {
+        key: {
+            "mean": float(np.mean([r[key] for r in results])),
+            "sample_std": float(np.std([r[key] for r in results], ddof=1)) if len(results) > 1 else None,
+            "min": min(r[key] for r in results),
+            "max": max(r[key] for r in results),
+        }
+        for key in keys
+    }
     write_json(output / "summary.json", {"runs": results, "aggregate": aggregate})
-    lines = ["# Cooling PINN results", "", "These runs solve one forward cooling problem on 0–10 minutes.", "",
-             f"Each seed used {c.steps} Adam steps. Checkpoints were selected using validation residual loss plus the soft initial-condition loss. Exact temperatures were used only after selection.", "",
-             "| Seed | Selected step | MAE (°C) | RMSE (°C) | Max error (°C) | IC error (°C) | Residual RMS (°C/min) |",
-             "|---|---|---|---|---|---|---|"]
+    lines = [
+        "# Cooling PINN results",
+        "",
+        "These runs solve one forward cooling problem on 0–10 minutes.",
+        "",
+        f"Each seed used {c.steps} Adam steps. Checkpoints were selected using validation residual loss "
+        "plus the soft initial-condition loss. Exact temperatures were used only after selection.",
+        "",
+        "| Seed | Selected step | MAE (°C) | RMSE (°C) | Max error (°C) | IC error (°C) | Residual RMS (°C/min) |",
+        "|---|---|---|---|---|---|---|",
+    ]
     for r in results:
-        lines.append(f"| {r['seed']} | {r['selected_step']} | {r['mae_c']:.6g} | {r['rmse_c']:.6g} | {r['max_abs_error_c']:.6g} | {r['initial_abs_error_c']:.6g} | {r['test_residual_rms_c_per_min']:.6g} |")
+        cells = [str(r["seed"]), str(r["selected_step"])]
+        cells += [f"{r[k]:.6g}" for k in ("mae_c", "rmse_c", "max_abs_error_c", "initial_abs_error_c")]
+        cells.append(f"{r['test_residual_rms_c_per_min']:.6g}")
+        lines.append("| " + " | ".join(cells) + " |")
     lines.extend(["", "Across seeds (sample standard deviation uses n−1):", ""])
     for key in keys:
         a = aggregate[key]
-        spread = f"{a['sample_std']:.6g}" if a['sample_std'] is not None else "undefined for one seed"
+        spread = f"{a['sample_std']:.6g}" if a["sample_std"] is not None else "undefined for one seed"
         lines.append(f"- {key}: mean {a['mean']:.6g}; sample SD {spread}; range [{a['min']:.6g}, {a['max']:.6g}].")
-    lines.extend(["", "All saved checkpoints reproduced their in-memory predictions exactly on 101 probe times after reload.", "",
-                  f"The {c.n_test:,}-point final grid checks solution error and residuals within the training interval. Its interior points are held out; the initial-condition endpoint is a known constraint. It does not establish an error bound between points. These {len(results)} seeds describe this small experiment; they do not establish broad reliability. No changed coefficients, inverse estimation, noisy observations, or extrapolation were tested.", ""])
+    lines.extend(
+        [
+            "",
+            "All saved checkpoints reproduced their in-memory predictions exactly on 101 probe times after reload.",
+            "",
+            f"The {c.n_test:,}-point final grid checks solution error and residuals within the training interval. "
+            "Its interior points are held out; the initial-condition endpoint is a known constraint. "
+            "It does not establish an error bound between points. "
+            f"These {len(results)} seeds describe this small experiment; they do not establish broad reliability. "
+            "No changed coefficients, inverse estimation, noisy observations, or extrapolation were tested.",
+            "",
+        ]
+    )
     (output / "RESULTS.md").write_text("\n".join(lines), encoding="utf-8")
 
 
@@ -142,14 +214,26 @@ def main() -> None:
     torch.use_deterministic_algorithms(True)
     c = Config(steps=args.steps)
     args.output.mkdir(parents=True, exist_ok=True)
-    write_json(args.output / "environment.json", {"python": sys.version,
-               "platform": platform.platform(), "torch": torch.__version__, "numpy": np.__version__,
-               "matplotlib": matplotlib.__version__, "device": "cpu", "dtype": "float64",
-               "torch_threads": torch.get_num_threads(), "deterministic_algorithms": True,
-               "command": ["cooling_pinn.py", "--seeds", *map(str, args.seeds), "--steps", str(args.steps)],
-               "privacy_note": "Executable and output paths are omitted; command records portable training arguments.",
-               "source_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
-               "library_sha256": hashlib.sha256(Path(sys.modules[CoolingNet.__module__].__file__).read_bytes()).hexdigest()})
+    write_json(
+        args.output / "environment.json",
+        {
+            "python": sys.version,
+            "platform": platform.platform(),
+            "torch": torch.__version__,
+            "numpy": np.__version__,
+            "matplotlib": matplotlib.__version__,
+            "device": "cpu",
+            "dtype": "float64",
+            "torch_threads": torch.get_num_threads(),
+            "deterministic_algorithms": True,
+            "command": ["cooling_pinn.py", "--seeds", *map(str, args.seeds), "--steps", str(args.steps)],
+            "privacy_note": "Executable and output paths are omitted; command records portable training arguments.",
+            "source_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            "library_sha256": hashlib.sha256(
+                Path(sys.modules[CoolingNet.__module__].__file__).read_bytes()
+            ).hexdigest(),
+        },
+    )
     results = [run_seed(seed, c, args.output) for seed in args.seeds]
     summarize(results, args.output, c)
 

@@ -38,6 +38,8 @@ python -m unittest discover -s tests -v
 
 Then follow the README of the experiment you want to run.
 
+Before committing, `pip install ruff==0.14.0`, then run `ruff check .` and `ruff format .`. CI runs the same checks.
+
 ## Citation
 
 If this code is useful to you, GitHub's "Cite this repository" button uses [CITATION.cff](CITATION.cff).
