@@ -1,0 +1,113 @@
+[
+ {
+  "method": "zoadam",
+  "deriv": "exact",
+  "tag": "tune-lr0.001-q10",
+  "seed": 0,
+  "budget": 300000,
+  "hp": {
+   "q": 10,
+   "mu": 0.001,
+   "lr": 0.001,
+   "every": 5000
+  }
+ },
+ {
+  "method": "zoadam",
+  "deriv": "exact",
+  "tag": "tune-lr0.001-q40",
+  "seed": 0,
+  "budget": 300000,
+  "hp": {
+   "q": 40,
+   "mu": 0.001,
+   "lr": 0.001,
+   "every": 5000
+  }
+ },
+ {
+  "method": "zoadam",
+  "deriv": "exact",
+  "tag": "tune-lr0.003-q10",
+  "seed": 0,
+  "budget": 300000,
+  "hp": {
+   "q": 10,
+   "mu": 0.001,
+   "lr": 0.003,
+   "every": 5000
+  }
+ },
+ {
+  "method": "zoadam",
+  "deriv": "exact",
+  "tag": "tune-lr0.003-q40",
+  "seed": 0,
+  "budget": 300000,
+  "hp": {
+   "q": 40,
+   "mu": 0.001,
+   "lr": 0.003,
+   "every": 5000
+  }
+ },
+ {
+  "method": "zoadam",
+  "deriv": "exact",
+  "tag": "tune-lr0.01-q10",
+  "seed": 0,
+  "budget": 300000,
+  "hp": {
+   "q": 10,
+   "mu": 0.001,
+   "lr": 0.01,
+   "every": 5000
+  }
+ },
+ {
+  "method": "zoadam",
+  "deriv": "exact",
+  "tag": "tune-lr0.01-q40",
+  "seed": 0,
+  "budget": 300000,
+  "hp": {
+   "q": 40,
+   "mu": 0.001,
+   "lr": 0.01,
+   "every": 5000
+  }
+ },
+ {
+  "method": "cmaes",
+  "deriv": "exact",
+  "tag": "tune-s0.02",
+  "seed": 0,
+  "budget": 300000,
+  "hp": {
+   "sigma0": 0.02,
+   "every": 5000
+  }
+ },
+ {
+  "method": "cmaes",
+  "deriv": "exact",
+  "tag": "tune-s0.05",
+  "seed": 0,
+  "budget": 300000,
+  "hp": {
+   "sigma0": 0.05,
+   "every": 5000
+  }
+ },
+ {
+  "method": "cmaes",
+  "deriv": "exact",
+  "tag": "tune-s0.2",
+  "seed": 0,
+  "budget": 300000,
+  "hp": {
+   "sigma0": 0.2,
+   "every": 5000
+  }
+ }
+]

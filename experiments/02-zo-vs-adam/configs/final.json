@@ -1,0 +1,212 @@
+[
+ {
+  "method": "adam",
+  "deriv": "autograd",
+  "tag": "base",
+  "seed": 7,
+  "budget": 6000,
+  "hp": {
+   "lr": 0.001,
+   "every": 50
+  }
+ },
+ {
+  "method": "zoadam",
+  "deriv": "exact",
+  "tag": "final",
+  "seed": 7,
+  "budget": 300000,
+  "hp": {
+   "q": 10,
+   "mu": 0.001,
+   "lr": 0.003,
+   "every": 5000
+  }
+ },
+ {
+  "method": "zoadam",
+  "deriv": "fd",
+  "tag": "final",
+  "seed": 7,
+  "budget": 300000,
+  "hp": {
+   "q": 10,
+   "mu": 0.001,
+   "lr": 0.003,
+   "every": 5000
+  }
+ },
+ {
+  "method": "cmaes",
+  "deriv": "exact",
+  "tag": "final",
+  "seed": 7,
+  "budget": 300000,
+  "hp": {
+   "sigma0": 0.05,
+   "every": 5000
+  }
+ },
+ {
+  "method": "cmaes",
+  "deriv": "fd",
+  "tag": "final",
+  "seed": 7,
+  "budget": 300000,
+  "hp": {
+   "sigma0": 0.05,
+   "every": 5000
+  }
+ },
+ {
+  "method": "adam",
+  "deriv": "autograd",
+  "tag": "long",
+  "seed": 7,
+  "budget": 30000,
+  "hp": {
+   "lr": 0.001,
+   "every": 250
+  }
+ },
+ {
+  "method": "adam",
+  "deriv": "autograd",
+  "tag": "base",
+  "seed": 21,
+  "budget": 6000,
+  "hp": {
+   "lr": 0.001,
+   "every": 50
+  }
+ },
+ {
+  "method": "zoadam",
+  "deriv": "exact",
+  "tag": "final",
+  "seed": 21,
+  "budget": 300000,
+  "hp": {
+   "q": 10,
+   "mu": 0.001,
+   "lr": 0.003,
+   "every": 5000
+  }
+ },
+ {
+  "method": "zoadam",
+  "deriv": "fd",
+  "tag": "final",
+  "seed": 21,
+  "budget": 300000,
+  "hp": {
+   "q": 10,
+   "mu": 0.001,
+   "lr": 0.003,
+   "every": 5000
+  }
+ },
+ {
+  "method": "cmaes",
+  "deriv": "exact",
+  "tag": "final",
+  "seed": 21,
+  "budget": 300000,
+  "hp": {
+   "sigma0": 0.05,
+   "every": 5000
+  }
+ },
+ {
+  "method": "cmaes",
+  "deriv": "fd",
+  "tag": "final",
+  "seed": 21,
+  "budget": 300000,
+  "hp": {
+   "sigma0": 0.05,
+   "every": 5000
+  }
+ },
+ {
+  "method": "adam",
+  "deriv": "autograd",
+  "tag": "long",
+  "seed": 21,
+  "budget": 30000,
+  "hp": {
+   "lr": 0.001,
+   "every": 250
+  }
+ },
+ {
+  "method": "adam",
+  "deriv": "autograd",
+  "tag": "base",
+  "seed": 42,
+  "budget": 6000,
+  "hp": {
+   "lr": 0.001,
+   "every": 50
+  }
+ },
+ {
+  "method": "zoadam",
+  "deriv": "exact",
+  "tag": "final",
+  "seed": 42,
+  "budget": 300000,
+  "hp": {
+   "q": 10,
+   "mu": 0.001,
+   "lr": 0.003,
+   "every": 5000
+  }
+ },
+ {
+  "method": "zoadam",
+  "deriv": "fd",
+  "tag": "final",
+  "seed": 42,
+  "budget": 300000,
+  "hp": {
+   "q": 10,
+   "mu": 0.001,
+   "lr": 0.003,
+   "every": 5000
+  }
+ },
+ {
+  "method": "cmaes",
+  "deriv": "exact",
+  "tag": "final",
+  "seed": 42,
+  "budget": 300000,
+  "hp": {
+   "sigma0": 0.05,
+   "every": 5000
+  }
+ },
+ {
+  "method": "cmaes",
+  "deriv": "fd",
+  "tag": "final",
+  "seed": 42,
+  "budget": 300000,
+  "hp": {
+   "sigma0": 0.05,
+   "every": 5000
+  }
+ },
+ {
+  "method": "adam",
+  "deriv": "autograd",
+  "tag": "long",
+  "seed": 42,
+  "budget": 30000,
+  "hp": {
+   "lr": 0.001,
+   "every": 250
+  }
+ }
+]
