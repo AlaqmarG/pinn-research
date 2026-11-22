@@ -91,7 +91,7 @@ def load_checkpoint(path: Path) -> tuple[CoolingNet, Config, dict]:
 
 
 def evaluate(model: nn.Module, c: Config) -> tuple[dict, np.ndarray]:
-    """Called only after training and physics-only checkpoint selection finish."""
+    """Compare the model with the exact solution at the test times."""
     t = np.linspace(0, c.end_min, c.n_test)
     tau = torch.tensor(t[:, None] / c.end_min, dtype=torch.float64)
     r, u = residual(model, tau, c, create_graph=False)

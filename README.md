@@ -16,13 +16,13 @@ Experiments with physics-informed neural networks (PINNs), small enough to run o
 | 01 | [Cooling PINN trained with Adam](experiments/01-cooling-adam/) | Can a physics-only PINN match the exact cooling curve? |
 | 02 | [Adam vs zero-order training](experiments/02-zo-vs-adam/) | How well does the same PINN train from loss values alone? |
 
-Each experiment is self-contained. Its README covers the setup, the commands to reproduce it, the results and any library versions it needs.
+Each experiment has its own README with the setup, the commands to reproduce it, the results and the library versions it needs.
 
 ## How the repo is organized
 
 - `experiments/` has one numbered folder per study.
 - `src/pinnlab/` holds code shared between experiments. Experiments import from it, never from each other.
-- `tests/` checks the shared code, and runs on every push.
+- `tests/` checks the shared code. CI runs it on pull requests and on pushes to `main` that change `src/`, `tests/` or `pyproject.toml`.
 - Results and figures are not committed. Experiments are run locally, and their outputs are attached to a [release](https://github.com/AlaqmarG/pinn-research/releases) so the numbers match what was reported.
 
 ## Shared setup

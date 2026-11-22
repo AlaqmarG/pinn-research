@@ -1,4 +1,4 @@
-"""Summarise experiment 02: LaTeX table, summary.json and the convergence figure.
+"""Summarize experiment 02: LaTeX table, summary.json and the convergence figure.
 
 Usage (from the repository root):
     python experiments/02-zo-vs-adam/make_figures.py experiments/02-zo-vs-adam/results/final \

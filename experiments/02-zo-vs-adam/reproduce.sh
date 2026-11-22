@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Reproduce experiment 02 (about 75 minutes on one CPU thread).
+# Reproduce experiment 02 (about 50 minutes on a desktop PC).
 # Usage: bash experiments/02-zo-vs-adam/reproduce.sh <out-dir>
 set -euo pipefail
 out="${1:?usage: reproduce.sh <out-dir>}"

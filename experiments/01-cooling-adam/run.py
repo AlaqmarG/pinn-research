@@ -64,7 +64,7 @@ def run_seed(seed: int, c: Config, output: Path) -> dict:
     np.random.seed(seed)
     folder = output / f"seed_{seed}"
     folder.mkdir(parents=True, exist_ok=True)
-    # Separate random streams; fixed points throughout each run. Neither uses labels.
+    # Training and validation times come from separate generators and stay fixed for the whole run.
     train = torch.rand((c.n_train, 1), generator=torch.Generator().manual_seed(seed + 10000), dtype=torch.float64)
     validation = torch.rand(
         (c.n_validation, 1), generator=torch.Generator().manual_seed(seed + 20000), dtype=torch.float64
@@ -189,13 +189,10 @@ def summarize(results: list[dict], output: Path, c: Config) -> None:
     lines.extend(
         [
             "",
-            "All saved checkpoints reproduced their in-memory predictions exactly on 101 probe times after reload.",
+            "Every checkpoint gave identical predictions at 101 times after being loaded back from disk.",
             "",
-            f"The {c.n_test:,}-point final grid checks solution error and residuals within the training interval. "
-            "Its interior points are held out; the initial-condition endpoint is a known constraint. "
-            "It does not establish an error bound between points. "
-            f"These {len(results)} seeds describe this small experiment; they do not establish broad reliability. "
-            "No changed coefficients, inverse estimation, noisy observations, or extrapolation were tested.",
+            f"Errors and residuals are measured at {c.n_test:,} evenly spaced times inside the training interval. "
+            "Other coefficients, inverse problems, noisy data and extrapolation were not tested.",
             "",
         ]
     )
@@ -226,8 +223,7 @@ def main() -> None:
             "dtype": "float64",
             "torch_threads": torch.get_num_threads(),
             "deterministic_algorithms": True,
-            "command": ["cooling_pinn.py", "--seeds", *map(str, args.seeds), "--steps", str(args.steps)],
-            "privacy_note": "Executable and output paths are omitted; command records portable training arguments.",
+            "command": ["run.py", "--seeds", *map(str, args.seeds), "--steps", str(args.steps)],
             "source_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
             "library_sha256": hashlib.sha256(
                 Path(sys.modules[CoolingNet.__module__].__file__).read_bytes()
