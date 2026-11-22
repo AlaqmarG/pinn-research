@@ -27,7 +27,7 @@ def expand(config: dict) -> list[dict]:
     """Turn a compact config into one entry per run.
 
     A config has "seeds" and "runs". In each run, "deriv" and any value inside "hp" may be
-    a list; every combination is run for every seed. "tag" can name hp values, e.g.
+    a list, and every combination is run for every seed. "tag" can use hp values, like
     "tune-lr{lr}". Runs are ordered by seed, then by their order in the file.
     """
     out = []
@@ -74,7 +74,7 @@ def main():
                 "torch": torch.__version__,
                 "numpy": np.__version__,
                 "cma": cma.__version__,
-                "threads": 1,
+                "torch_threads": torch.get_num_threads(),
                 "dtype": "float64",
                 "fd_h": FD_H,
                 "n_params": N_PARAMS,

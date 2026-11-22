@@ -1,8 +1,6 @@
-# 01 · Cooling PINN trained with Adam
+# 01: Cooling PINN trained with Adam
 
-A small PyTorch physics-informed neural network solves Newton's law of cooling using the differential equation and starting temperature.
-
-The problem is
+A small PyTorch PINN that solves Newton's law of cooling from the equation and the starting temperature alone.
 
 ```text
 dT/dt = -0.1 (T - 20)
@@ -10,11 +8,11 @@ T(0) = 80 °C
 0 <= t <= 10 minutes
 ```
 
-Training uses the equation and the initial condition. No measured temperatures or exact-solution labels enter training or checkpoint selection. The exact solution, `T(t) = 20 + 60 exp(-0.1t)`, is used only for final evaluation after checkpoint selection.
+No measured or exact temperatures are used in training or in picking the checkpoint. The exact solution, `T(t) = 20 + 60 exp(-0.1t)`, is only used afterwards to measure the error.
 
 ## Results
 
-The supplied experiment used three seeds and 6,000 Adam updates per seed. Checkpoints were selected by the smallest validation residual loss plus initial-condition loss.
+Three seeds, 6,000 Adam steps each. The saved checkpoint is the one with the lowest validation residual loss plus initial-condition loss.
 
 | Seed | Selected step | MAE (°C) | RMSE (°C) | Maximum error (°C) |
 |---|---:|---:|---:|---:|
@@ -22,15 +20,15 @@ The supplied experiment used three seeds and 6,000 Adam updates per seed. Checkp
 | 21 | 5900 | 0.00226556 | 0.00269999 | 0.00527257 |
 | 42 | 6000 | 0.00376351 | 0.00459602 | 0.00863944 |
 
-Across seeds, mean RMSE was **0.00360496 °C**, with sample standard deviation **0.000950944 °C**. These errors were measured on a 1,001-point grid within the ten-minute interval.
+Mean RMSE over the seeds is 0.00360496 °C, with a sample standard deviation of 0.000950944 °C. Errors are measured at 1,001 evenly spaced times in the ten minutes.
 
 ![Predicted and exact cooling curves for seed 21](https://github.com/AlaqmarG/pinn-research/releases/download/raw-results-v1/01-cooling-adam-temperature-overlay.png)
 
-All outputs from these runs are in [01-cooling-adam-raw-results.zip](https://github.com/AlaqmarG/pinn-research/releases/download/raw-results-v1/01-cooling-adam-raw-results.zip) on the [raw-results-v1 release](https://github.com/AlaqmarG/pinn-research/releases/tag/raw-results-v1): `RESULTS.md`, `summary.json`, `environment.json`, the test transcript, and for each seed the selected checkpoint, configuration, sample times, loss history, predictions and plots. Running `reproduce.sh` writes the same files locally.
+Everything these runs wrote is in [01-cooling-adam-raw-results.zip](https://github.com/AlaqmarG/pinn-research/releases/download/raw-results-v1/01-cooling-adam-raw-results.zip) on the [raw-results-v1 release](https://github.com/AlaqmarG/pinn-research/releases/tag/raw-results-v1): `RESULTS.md`, `summary.json`, `environment.json`, the test transcript, and for each seed the checkpoint, config, sample times, loss history, predictions and plots. The local Python path was removed from `environment.json` before upload.
 
-## Setup and reproduction
+## Reproduce
 
-Use Python 3.12. The recorded experiment used Python 3.12.14, PyTorch 2.11.0+cu128, NumPy 2.5.3 and Matplotlib 3.11.2. All training runs on CPU even when a CUDA-capable PyTorch build is installed. The requirements pin the library release versions; wheel variants can differ by platform.
+Use Python 3.12. The results above came from Python 3.12.14, PyTorch 2.11.0+cu128, NumPy 2.5.3 and Matplotlib 3.11.2. Training runs on the CPU even if PyTorch has CUDA.
 
 Windows PowerShell, from the repository root:
 
@@ -52,24 +50,29 @@ python3.12 -m venv .venv
 .venv/bin/python experiments/01-cooling-adam/run.py --output results-reproduction
 ```
 
-The default seeds are 7, 21 and 42. `--seeds` accepts a list of distinct integers; `--steps` changes the training budget. Without `--output`, results go to `results/` in this folder, which git ignores. `bash experiments/01-cooling-adam/reproduce.sh out` runs the defaults and writes everything to `out/`. Exact numerical agreement across different hardware or library builds is not guaranteed.
+- `--seeds` takes a list of distinct integers (default 7, 21 and 42) and `--steps` sets the number of Adam steps.
+- Without `--output`, results go to `results/` in this folder, which git ignores.
+- `bash experiments/01-cooling-adam/reproduce.sh out` runs the defaults and writes to `out/`.
+- Numbers change slightly with other hardware or library versions. With PyTorch 2.15.0 the RMSEs differ by up to 0.00006 °C and seed 21 selects step 6000 instead of 5900.
 
-## Method and checks
+## Method
 
-The input is dimensionless time `tau = t/10`; the output is excess temperature `u = (T-20)/60`. The chain rule gives `dT/dt = 6 du/dtau`, so the dimensionless equation residual is `r = du/dtau + u`. Training minimizes `mean(r²) + (u(0)-1)²`; the initial condition is a soft penalty with weight 1.
+The network takes scaled time `tau = t/10` and predicts scaled temperature `u = (T-20)/60`. Since `dT/dt = 6 du/dtau`, the residual of the equation is `r = du/dtau + u`. Training minimizes `mean(r²) + (u(0)-1)²`.
 
-The network has two hidden layers of 24 tanh units and a linear output, with 673 trainable parameters. Adam uses a fixed learning rate of 0.001, float64 arithmetic and one CPU thread. Each seed uses 128 fixed random collocation times and a separate stream of 257 validation times. Validation is checked every 50 steps. Training always completes its full budget; the saved checkpoint can come from an earlier step.
+- The network has two hidden layers of 24 tanh units and a linear output, 673 parameters in float64.
+- It is trained with Adam at learning rate 0.001 on one CPU thread.
+- Each seed has 128 fixed random collocation times and 257 separate validation times. The 1,001 test times are evenly spaced.
+- Validation is checked every 50 steps. Training always runs the full budget, so the saved checkpoint can come from an earlier step.
+- Each checkpoint is loaded back from disk and must give identical predictions at 101 times.
 
-After selection, each checkpoint is reloaded from disk and checked for identical predictions on 101 probe times. Final evaluation uses 1,001 equally spaced times. The interior test points are held out; the initial endpoint is the known initial-condition constraint. Physical residuals are reported in °C/min.
+The four unit tests check the residual and its units on a known solution, the derivative against finite differences, backpropagation through the derivative, and saving and loading a checkpoint.
 
-The four tests check analytic residuals and physical units with a non-unit time scale, derivatives against finite differences, backpropagation through the derivative, and checkpoint serialization. The original successful test transcript is `test-results.txt` in the release zip.
+## Provenance
 
-## Provenance and limits
+[provenance/executed_cooling_pinn.py](provenance/executed_cooling_pinn.py) is the script that produced the results above, unchanged. Its hash is recorded in `environment.json` in the release zip. The current code is the same calculation split into [run.py](run.py) and [src/pinnlab/cooling.py](../../src/pinnlab/cooling.py). A 300-step run of both on the same library versions gives byte-identical predictions. The outputs differ in two files. `environment.json` leaves out the Python executable path, records the seeds and steps in place of the raw command line, and adds a hash of `cooling.py` next to the hash of `run.py`. The notes at the end of `RESULTS.md` are shorter.
 
-`environment.json` in the release zip preserves the original package versions, CPU settings and executed source hash. Machine-specific executable paths were removed before publication. Its source hash matches [provenance/executed_cooling_pinn.py](provenance/executed_cooling_pinn.py), the unchanged source that produced the supplied results. The current code is split between [run.py](run.py) and [src/pinnlab/cooling.py](../../src/pinnlab/cooling.py). It differs from that file only in environment logging: new logs omit executable and output paths, record portable training arguments and hash both files. Training, selection and evaluation calculations are unchanged, and a 300-step run on the same library versions gives byte-identical predictions.
+Checkpoints hold the selected weights and the config, but not the optimizer state, so training cannot be resumed from them.
 
-Checkpoints contain selected model weights and configuration, not optimizer state for resuming training. `relative_l2_temperature` normalizes the error by the exact temperature norm; `relative_l2_excess_temperature` normalizes by the exact temperature above ambient. Seed variation uses the sample standard deviation (n−1).
+## Limits
 
-This is one forward problem with known constants. Changed conditions, inverse estimation, noisy observations and extrapolation have not been tested. A small residual alone does not establish solution accuracy; this example also checks against the exact solution. Finite grids do not provide a rigorous error bound between points, and three seeds do not establish general PINN reliability.
-
-PyTorch reference: [automatic differentiation API](https://docs.pytorch.org/docs/stable/generated/torch.autograd.grad.html).
+This is one forward problem with known constants and three seeds. Other coefficients, inverse problems, noisy data and prediction past ten minutes were not tested. A small residual does not by itself mean a small error, which is why the runs are also compared with the exact solution.

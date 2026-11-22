@@ -1,9 +1,10 @@
 """Zero-order (ZO) training of the cooling PINN.
 
-Batched copy of the cooling network, two ways of computing du/dtau (exact forward-mode
-chain rule, or central finite differences), and three trainers: Adam (reference),
-ZO-Adam (two-point random gradient estimate) and CMA-ES. Budgets count loss
-evaluations; exact temperatures are used only in `final_metrics`.
+A batched copy of the cooling network that scores many parameter vectors at once.
+du/dtau comes from either a hand-written chain rule or central finite differences.
+There are three trainers: Adam as the reference, ZO-Adam and CMA-ES.
+ZO budgets count loss evaluations and Adam's counts gradient steps.
+Exact temperatures are used only in `final_metrics`.
 """
 
 from __future__ import annotations
@@ -89,15 +90,14 @@ def points(seed: int):
 
 
 def init_theta(seed: int) -> torch.Tensor:
-    """Starting parameters for a seed, identical to CoolingNet's initialisation."""
+    """Starting parameters for a seed, identical to CoolingNet's initialization."""
     torch.manual_seed(seed)
     np.random.seed(seed)
     return flatten_model(cp.CoolingNet(C))
 
 
 def validation_score(theta: torch.Tensor, val: torch.Tensor, deriv: str = "exact") -> float:
-    # Selection always uses the exact input derivative on validation points,
-    # identical to the baseline rule (residual MSE + IC MSE), never labels.
+    """Residual MSE + IC MSE on the validation times."""
     with torch.no_grad():
         return float(batched_loss(theta[None], val, deriv)[0][0])
 
@@ -106,8 +106,8 @@ class Tracker:
     """Records validation score at regular eval counts and keeps the best."""
 
     def __init__(self, val, every, deriv="exact"):
-        # deriv: input-derivative method used for selection; fd runs select
-        # with finite differences so the whole pipeline stays derivative-free.
+        # deriv is how du/dtau is computed for the validation score. fd runs pass "fd"
+        # so that selection, like training, needs network outputs only.
         self.val, self.every, self.next, self.deriv = val, every, 0, deriv
         self.best, self.best_theta, self.best_evals = float("inf"), None, 0
         self.history = []
@@ -131,7 +131,7 @@ class Tracker:
 
 
 def run_adam(seed, budget, hp, deriv="autograd"):
-    """Train with Adam on backpropagated gradients; budget counts gradient steps."""
+    """Train with Adam on backpropagated gradients. The budget is the number of gradient steps."""
     train, val = points(seed)
     torch.manual_seed(seed)
     np.random.seed(seed)
@@ -172,7 +172,7 @@ def run_zoadam(seed, budget, hp, deriv):
             batch = torch.cat([theta + mu * U, theta - mu * U])
             L = batched_loss(batch, train, deriv)[0]
             evals += 2 * q
-            g = ((L[:q] - L[q:]) / (2 * mu)) @ U / q  # two-point estimate
+            g = ((L[:q] - L[q:]) / (2 * mu)) @ U / q  # two-point estimate, averaged over q directions
             t += 1
             m = b1 * m + (1 - b1) * g
             v = b2 * v + (1 - b2) * g * g
@@ -223,7 +223,7 @@ METHODS = {"adam": run_adam, "zoadam": run_zoadam, "cmaes": run_cmaes}
 
 
 def final_metrics(theta):
-    """Evaluate a parameter vector against the exact solution (after selection only)."""
+    """Evaluate a parameter vector against the exact solution."""
     model = cp.CoolingNet(C)
     load_flat(model, theta)
     metrics, predictions = cp.evaluate(model, C)

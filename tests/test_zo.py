@@ -10,7 +10,6 @@ from pinnlab import zo as zp
 class PilotTests(unittest.TestCase):
     def setUp(self):
         self.theta = zp.init_theta(7)
-        self.model = zp.cp.CoolingNet(zp.C)
         torch.manual_seed(7)
         self.model = zp.cp.CoolingNet(zp.C)
         self.x = torch.rand((50, 1), dtype=torch.float64, generator=torch.Generator().manual_seed(1))

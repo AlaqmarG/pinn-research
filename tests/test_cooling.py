@@ -1,4 +1,4 @@
-"""Check calculus/scaling and checkpoint serialization independently of optimization."""
+"""Tests for the residual, its scaling and checkpoint saving. No training is run."""
 
 import io
 import unittest

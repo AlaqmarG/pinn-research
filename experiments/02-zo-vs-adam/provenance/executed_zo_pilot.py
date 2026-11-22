@@ -1,6 +1,6 @@
 """Pilot: Adam versus zero-order (ZO) training of the physics-only cooling PINN.
 
-Same problem, network, initialisation, collocation/validation points and
+Same problem, network, initialization, collocation/validation points and
 selection rule as GitHub/cooling-pinn/cooling_pinn.py. Exact temperatures are
 used only for final evaluation after checkpoint selection.
 
@@ -12,13 +12,13 @@ Methods
 Input-derivative variants for ZO methods (the residual needs du/dtau):
   exact     du/dtau propagated analytically through the tanh layers
             (forward mode, no backpropagation, no autograd)
-  fd        central finite difference in tau, h = 1e-3 (no derivative of the
-            network is ever computed: fully derivative-free pipeline)
+  fd        central finite difference in tau, h = 1e-3 (training and
+            checkpoint selection need network outputs only)
 
-Budgets are counted in loss evaluations (one evaluation = residual on all
-128 collocation points + initial condition, for one parameter vector).
-Adam is counted in gradient evaluations; a reverse-mode gradient costs a
-small constant multiple of one loss evaluation, so wall-clock is reported too.
+Budgets are counted in loss evaluations. One evaluation is the residual on all
+128 collocation points plus the initial condition, for one parameter vector.
+Adam is counted in gradient evaluations. A reverse-mode gradient costs a small
+constant multiple of one loss evaluation, so wall-clock time is reported too.
 """
 from __future__ import annotations
 
@@ -44,7 +44,6 @@ SHAPES = [(24, 1), (24,), (24, 24), (24,), (1, 24), (1,)]
 N_PARAMS = sum(int(np.prod(s)) for s in SHAPES)  # 673
 
 
-# ---------------------------------------------------------------- model ----
 def unflatten(theta: torch.Tensor):
     """theta (P, 673) -> list of batched weight tensors in CoolingNet order."""
     out, i = [], 0
@@ -103,7 +102,6 @@ def batched_loss(theta: torch.Tensor, x: torch.Tensor, deriv: str):
     return physics + C.ic_weight * ic, physics, ic
 
 
-# ------------------------------------------------------------ helpers ----
 def points(seed: int):
     train = torch.rand((C.n_train, 1), generator=torch.Generator().manual_seed(seed + 10000), dtype=torch.float64)
     val = torch.rand((C.n_validation, 1), generator=torch.Generator().manual_seed(seed + 20000), dtype=torch.float64)
@@ -117,8 +115,7 @@ def init_theta(seed: int) -> torch.Tensor:
 
 
 def validation_score(theta: torch.Tensor, val: torch.Tensor, deriv: str = "exact") -> float:
-    # Selection always uses the exact input derivative on validation points,
-    # identical to the baseline rule (residual MSE + IC MSE), never labels.
+    # Residual MSE + IC MSE on the validation times.
     with torch.no_grad():
         return float(batched_loss(theta[None], val, deriv)[0][0])
 
@@ -127,8 +124,8 @@ class Tracker:
     """Records validation score at regular eval counts and keeps the best."""
 
     def __init__(self, val, every, deriv="exact"):
-        # deriv: input-derivative method used for selection; fd runs select
-        # with finite differences so the whole pipeline stays derivative-free.
+        # deriv is how du/dtau is computed for the validation score. fd runs pass "fd"
+        # so that selection, like training, needs network outputs only.
         self.val, self.every, self.next, self.deriv = val, every, 0, deriv
         self.best, self.best_theta, self.best_evals = float("inf"), None, 0
         self.history = []
@@ -145,7 +142,6 @@ class Tracker:
             self.best, self.best_theta, self.best_evals = s, theta.clone(), evals
 
 
-# ------------------------------------------------------------ methods ----
 def run_adam(seed, budget, hp, deriv="autograd"):
     train, val = points(seed)
     torch.manual_seed(seed)
@@ -234,7 +230,6 @@ def final_metrics(theta):
     return metrics, predictions
 
 
-# --------------------------------------------------------------- main ----
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", type=Path, required=True, help="JSON list of runs")
