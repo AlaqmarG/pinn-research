@@ -24,7 +24,7 @@ Mean RMSE over the seeds is 0.00360496 °C, with a sample standard deviation of 
 
 ![Predicted and exact cooling curves for seed 21](https://github.com/AlaqmarG/pinn-research/releases/download/raw-results-v1/01-cooling-adam-temperature-overlay.png)
 
-Everything these runs wrote is in [01-cooling-adam-raw-results.zip](https://github.com/AlaqmarG/pinn-research/releases/download/raw-results-v1/01-cooling-adam-raw-results.zip) on the [raw-results-v1 release](https://github.com/AlaqmarG/pinn-research/releases/tag/raw-results-v1): `RESULTS.md`, `summary.json`, `environment.json`, the test transcript, and for each seed the checkpoint, config, sample times, loss history, predictions and plots. The local Python path was removed from `environment.json` before upload.
+Everything these runs wrote is in [01-cooling-adam-raw-results.zip](https://github.com/AlaqmarG/pinn-research/releases/download/raw-results-v1/01-cooling-adam-raw-results.zip) on the [raw-results-v1 release](https://github.com/AlaqmarG/pinn-research/releases/tag/raw-results-v1): `RESULTS.md`, `summary.json`, `environment.json`, the test transcript, and for each seed the checkpoint, config, sample times, loss history, predictions and plots. Before upload, the local Python path was removed from `environment.json` and the notes at the end of `RESULTS.md` were reworded.
 
 ## Reproduce
 
@@ -69,7 +69,7 @@ The four unit tests check the residual and its units on a known solution, the de
 
 ## Provenance
 
-[provenance/executed_cooling_pinn.py](provenance/executed_cooling_pinn.py) is the script that produced the results above, unchanged. Its hash is recorded in `environment.json` in the release zip. The current code is the same calculation split into [run.py](run.py) and [src/pinnlab/cooling.py](../../src/pinnlab/cooling.py). A 300-step run of both on the same library versions gives byte-identical predictions. The outputs differ in two files. `environment.json` leaves out the Python executable path, records the seeds and steps in place of the raw command line, and adds a hash of `cooling.py` next to the hash of `run.py`. The notes at the end of `RESULTS.md` are shorter.
+[provenance/executed_cooling_pinn.py](provenance/executed_cooling_pinn.py) is the script that produced the results above, unchanged. Its hash is recorded in `environment.json` in the release zip. The current code is the same calculation split into [run.py](run.py) and [src/pinnlab/cooling.py](../../src/pinnlab/cooling.py). A 300-step run of both on the same library versions gives byte-identical predictions. The outputs differ in `environment.json`, which leaves out the Python executable path, records the seeds and steps in place of the raw command line, and adds a hash of `cooling.py` next to the hash of `run.py`.
 
 Checkpoints hold the selected weights and the config, but not the optimizer state, so training cannot be resumed from them.
 
